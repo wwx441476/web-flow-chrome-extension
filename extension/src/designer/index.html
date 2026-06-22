@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Flow · 流程画布</title>
+    <link rel="stylesheet" href="./designer.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <div class="toolbar-left">
+        <span class="logo">Web Flow</span>
+        <span class="toolbar-divider"></span>
+        <input id="workflow-name" type="text" class="workflow-name-input" placeholder="工作流名称" />
+        <span id="workflow-meta" class="workflow-meta"></span>
+      </div>
+      <div class="toolbar-right">
+        <button type="button" id="add-step-btn" class="btn secondary">+ 添加步骤</button>
+        <button type="button" id="save-btn" class="btn primary">保存流程</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="canvas-panel">
+        <div id="canvas-scroll" class="canvas-scroll">
+          <svg id="flow-svg" class="flow-svg" aria-hidden="true"></svg>
+          <div id="flow-canvas" class="flow-canvas">
+            <div class="flow-terminal start-node">
+              <span class="terminal-dot"></span>
+              <span>开始</span>
+            </div>
+            <div id="flow-nodes" class="flow-nodes"></div>
+            <div class="flow-terminal end-node">
+              <span class="terminal-dot"></span>
+              <span>结束</span>
+            </div>
+          </div>
+        </div>
+        <p id="canvas-empty" class="canvas-empty hidden">暂无步骤。点击「添加步骤」或从扩展录制后打开画布。</p>
+      </section>
+
+      <aside id="inspector" class="inspector hidden">
+        <div class="inspector-header">
+          <h2 id="inspector-title">编辑步骤</h2>
+          <button type="button" id="close-inspector-btn" class="icon-btn" title="关闭">×</button>
+        </div>
+        <div class="inspector-body">
+          <div class="field">
+            <label for="edit-step-type">步骤类型</label>
+            <select id="edit-step-type">
+              <option value="click">点击</option>
+              <option value="dblclick">双击</option>
+              <option value="hover">悬停</option>
+              <option value="scroll">滚动</option>
+              <option value="key">按键</option>
+              <option value="select">下拉选择</option>
+              <option value="fill-variable">输入变量</option>
+              <option value="fill-literal">输入固定文本</option>
+              <option value="fill-username">输入 username 变量</option>
+              <option value="fill-password">输入 password 变量</option>
+              <option value="fill-captcha">识别图形验证码</option>
+              <option value="wait">等待（延时）</option>
+              <option value="wait-element">等待元素出现</option>
+              <option value="navigate">打开网页</option>
+              <option value="manual-login">手工登录（暂停等待用户）</option>
+              <option value="extract">提取文本到变量</option>
+            </select>
+          </div>
+          <div class="field" id="edit-selector-field">
+            <label for="edit-step-selector">CSS 选择器</label>
+            <div class="selector-row">
+              <input id="edit-step-selector" type="text" placeholder="#search 或 .submit-btn" />
+              <button type="button" id="pick-element-btn" class="btn secondary small">拾取</button>
+            </div>
+            <p id="edit-selector-optional-hint" class="field-hint hidden">滚动页面时可留空 selector</p>
+          </div>
+          <div class="field hidden" id="edit-navigate-field">
+            <label for="edit-navigate-url">网页地址</label>
+            <input id="edit-navigate-url" type="text" placeholder="https://example.com/page" />
+          </div>
+          <div class="field hidden" id="edit-wait-element-field">
+            <label for="edit-wait-timeout">超时（毫秒，默认 8000）</label>
+            <input id="edit-wait-timeout" type="number" min="1000" step="500" value="8000" />
+          </div>
+          <div class="field hidden" id="edit-extract-fields">
+            <label for="edit-extract-variable">保存到变量名</label>
+            <input id="edit-extract-variable" type="text" placeholder="如 result、title" />
+            <label for="edit-extract-attribute">提取属性</label>
+            <select id="edit-extract-attribute">
+              <option value="text">文本 text</option>
+              <option value="value">值 value</option>
+              <option value="href">链接 href</option>
+            </select>
+          </div>
+          <div class="field hidden" id="edit-scroll-fields">
+            <label for="edit-scroll-top">scrollTop（可选）</label>
+            <input id="edit-scroll-top" type="number" placeholder="0" />
+            <label for="edit-scroll-left">scrollLeft（可选）</label>
+            <input id="edit-scroll-left" type="number" placeholder="0" />
+          </div>
+          <div class="field hidden" id="edit-key-fields">
+            <label for="edit-step-key">按键（如 Enter、Tab）</label>
+            <input id="edit-step-key" type="text" placeholder="Enter" />
+            <label for="edit-step-modifiers">修饰键（如 ctrl+shift）</label>
+            <input id="edit-step-modifiers" type="text" placeholder="ctrl+shift" />
+          </div>
+          <div class="field hidden" id="edit-select-fields">
+            <label for="edit-select-value">option value</label>
+            <input id="edit-select-value" type="text" />
+            <label for="edit-select-text">或 option 显示文字</label>
+            <input id="edit-select-text" type="text" />
+          </div>
+          <div class="field hidden" id="edit-variable-name-field">
+            <label for="edit-step-variable">变量名</label>
+            <input id="edit-step-variable" type="text" placeholder="如 search、email" />
+          </div>
+          <div class="field hidden" id="edit-literal-value-field">
+            <label for="edit-step-literal">固定文本</label>
+            <input id="edit-step-literal" type="text" placeholder="回放时填入的文本" />
+          </div>
+          <div class="field hidden" id="edit-image-selector-field">
+            <label for="edit-step-image-selector">验证码图片选择器（可选）</label>
+            <input id="edit-step-image-selector" type="text" placeholder="img.captcha" />
+          </div>
+          <div class="field">
+            <label for="edit-step-label">描述（可选）</label>
+            <input id="edit-step-label" type="text" placeholder="便于识别，如：提交按钮" />
+          </div>
+          <div class="field hidden" id="edit-delay-field">
+            <label for="edit-step-delay">等待时间（毫秒）</label>
+            <input id="edit-step-delay" type="number" min="100" step="100" value="500" />
+          </div>
+          <div class="inspector-actions">
+            <button type="button" id="save-step-btn" class="btn primary">应用</button>
+            <button type="button" id="delete-step-btn" class="btn danger">删除</button>
+          </div>
+        </div>
+      </aside>
+
+      <aside id="inspector-placeholder" class="inspector-placeholder">
+        <p>点击画布中的步骤节点进行编辑</p>
+        <p class="hint">拖拽节点左侧手柄可调整顺序</p>
+      </aside>
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script type="module" src="./designer.ts"></script>
+  </body>
+</html>

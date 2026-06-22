@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Flow</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Web Flow</h1>
+      <p class="subtitle">录制操作 · 回放自动化 · AI 规划</p>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="record">录制</button>
+      <button class="tab" data-tab="sites">工作流</button>
+      <button class="tab" data-tab="settings">设置</button>
+    </nav>
+
+    <section id="panel-record" class="panel active">
+      <div class="hint-box">
+        1. 配置变量 → 开始录制（弹窗自动关闭）→ 在页面上完成操作<br />
+        2. 点页面右上角「完成录制」，或页面跳转后自动完成<br />
+        3. 试跑回放会在页面显示浮动面板，支持单步执行与失败步骤就地修改<br />
+        4. 复杂登录可用「手工登录试跑」：新开页面、浮层展示凭据，手工完成后继续自动化
+      </div>
+      <div class="field">
+        <label for="current-url">当前页面</label>
+        <input id="current-url" type="text" readonly />
+      </div>
+      <div class="field">
+        <label for="site-name">工作流名称</label>
+        <input id="site-name" type="text" placeholder="默认使用页面标题" />
+      </div>
+      <div class="field">
+        <label for="username">变量 username（回放时注入）</label>
+        <input id="username" type="text" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="password">变量 password（回放时注入）</label>
+        <input id="password" type="password" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="ai-goal">AI 任务目标（可选，用于 AI 自动执行）</label>
+        <input id="ai-goal" type="text" placeholder="如：完成登录 / 提交搜索 / 填写表单" />
+      </div>
+      <div class="btn-row">
+        <button id="start-record-btn" class="btn primary">开始录制</button>
+        <button id="stop-record-btn" class="btn secondary" disabled>停止录制</button>
+      </div>
+      <div id="recorded-steps" class="steps hidden"></div>
+      <div id="step-editor" class="step-editor hidden">
+        <p class="step-editor-title">编辑步骤</p>
+        <div class="field">
+          <label for="edit-step-type">步骤类型</label>
+          <select id="edit-step-type">
+            <option value="click">点击</option>
+            <option value="dblclick">双击</option>
+            <option value="hover">悬停</option>
+            <option value="scroll">滚动</option>
+            <option value="key">按键</option>
+            <option value="select">下拉选择</option>
+            <option value="fill-variable">输入变量</option>
+            <option value="fill-literal">输入固定文本</option>
+            <option value="fill-username">输入 username 变量</option>
+            <option value="fill-password">输入 password 变量</option>
+            <option value="fill-captcha">识别图形验证码</option>
+            <option value="wait">等待（延时）</option>
+            <option value="wait-element">等待元素出现</option>
+            <option value="navigate">打开网页</option>
+            <option value="manual-login">手工登录（暂停等待用户）</option>
+            <option value="extract">提取文本到变量</option>
+          </select>
+        </div>
+        <div class="field" id="edit-selector-field">
+          <label for="edit-step-selector">CSS 选择器</label>
+          <div class="selector-row">
+            <input id="edit-step-selector" type="text" placeholder="#search 或 .submit-btn" />
+            <button type="button" id="pick-element-btn" class="btn secondary small">拾取</button>
+          </div>
+          <p id="edit-selector-optional-hint" class="field-hint hidden">滚动页面时可留空 selector</p>
+        </div>
+        <div class="field hidden" id="edit-navigate-field">
+          <label for="edit-navigate-url">网页地址</label>
+          <input id="edit-navigate-url" type="text" placeholder="https://example.com/page" />
+        </div>
+        <div class="field hidden" id="edit-wait-element-field">
+          <label for="edit-wait-timeout">超时（毫秒，默认 8000）</label>
+          <input id="edit-wait-timeout" type="number" min="1000" step="500" value="8000" />
+        </div>
+        <div class="field hidden" id="edit-extract-fields">
+          <label for="edit-extract-variable">保存到变量名</label>
+          <input id="edit-extract-variable" type="text" placeholder="如 result、title" />
+          <label for="edit-extract-attribute">提取属性</label>
+          <select id="edit-extract-attribute">
+            <option value="text">文本 text</option>
+            <option value="value">值 value</option>
+            <option value="href">链接 href</option>
+          </select>
+        </div>
+        <div class="field hidden" id="edit-scroll-fields">
+          <label for="edit-scroll-top">scrollTop（可选）</label>
+          <input id="edit-scroll-top" type="number" placeholder="0" />
+          <label for="edit-scroll-left">scrollLeft（可选）</label>
+          <input id="edit-scroll-left" type="number" placeholder="0" />
+        </div>
+        <div class="field hidden" id="edit-key-fields">
+          <label for="edit-step-key">按键（如 Enter、Tab）</label>
+          <input id="edit-step-key" type="text" placeholder="Enter" />
+          <label for="edit-step-modifiers">修饰键（如 ctrl+shift）</label>
+          <input id="edit-step-modifiers" type="text" placeholder="ctrl+shift" />
+        </div>
+        <div class="field hidden" id="edit-select-fields">
+          <label for="edit-select-value">option value</label>
+          <input id="edit-select-value" type="text" />
+          <label for="edit-select-text">或 option 显示文字</label>
+          <input id="edit-select-text" type="text" />
+        </div>
+        <div class="field hidden" id="edit-variable-name-field">
+          <label for="edit-step-variable">变量名</label>
+          <input id="edit-step-variable" type="text" placeholder="如 search、email" />
+        </div>
+        <div class="field hidden" id="edit-literal-value-field">
+          <label for="edit-step-literal">固定文本</label>
+          <input id="edit-step-literal" type="text" placeholder="回放时填入的文本" />
+        </div>
+        <div class="field hidden" id="edit-image-selector-field">
+          <label for="edit-step-image-selector">验证码图片选择器（可选）</label>
+          <input id="edit-step-image-selector" type="text" placeholder="img.captcha" />
+        </div>
+        <div class="field">
+          <label for="edit-step-label">描述（可选）</label>
+          <input id="edit-step-label" type="text" placeholder="便于识别，如：提交按钮" />
+        </div>
+        <div class="field hidden" id="edit-delay-field">
+          <label for="edit-step-delay">等待时间（毫秒）</label>
+          <input id="edit-step-delay" type="number" min="100" step="100" value="500" />
+        </div>
+        <div class="btn-row">
+          <button id="save-step-btn" type="button" class="btn primary small">保存步骤</button>
+          <button id="cancel-step-btn" type="button" class="btn secondary small">取消</button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="replay-btn" class="btn primary" disabled>试跑回放</button>
+        <button id="manual-login-replay-btn" class="btn secondary" disabled>手工登录试跑</button>
+        <button id="open-designer-btn" class="btn secondary" disabled>流程画布</button>
+        <button id="ai-login-btn" class="btn secondary">AI 自动执行</button>
+      </div>
+      <div id="save-panel" class="save-panel hidden">
+        <p>若回放已达到预期效果，请确认并保存工作流：</p>
+        <button id="save-btn" class="btn success">确认成功并保存</button>
+        <button id="retry-btn" class="btn secondary">重新录制</button>
+      </div>
+      <p id="record-message" class="message"></p>
+    </section>
+
+    <section id="panel-sites" class="panel">
+      <div id="sites-list" class="sites-list"></div>
+      <p id="sites-empty" class="empty hidden">暂无保存的工作流，请先录制并试跑成功。</p>
+    </section>
+
+    <section id="panel-settings" class="panel">
+      <div class="field">
+        <label for="default-open-mode">工作流默认打开方式</label>
+        <select id="default-open-mode">
+          <option value="new_tab">新开标签（默认）</option>
+          <option value="current_tab">当前标签</option>
+        </select>
+      </div>
+
+      <div class="settings-section">
+        <h2 class="settings-title">大模型（验证码识别 / AI 自动规划）</h2>
+        <p class="settings-hint">支持 OpenAI 及兼容接口。API Key 仅存于本机；敏感变量值不会发送给大模型。</p>
+        <div class="field field-checkbox">
+          <label>
+            <input id="llm-enabled" type="checkbox" />
+            启用大模型
+          </label>
+        </div>
+        <div class="field">
+          <label for="llm-api-key">API Key</label>
+          <input id="llm-api-key" type="password" autocomplete="off" placeholder="sk-..." />
+        </div>
+        <div class="field">
+          <label for="llm-base-url">接口地址</label>
+          <input id="llm-base-url" type="text" placeholder="https://api.openai.com/v1" />
+        </div>
+        <div class="field">
+          <label for="llm-model">规划模型</label>
+          <input id="llm-model" type="text" placeholder="gpt-4o-mini" />
+        </div>
+        <div class="field">
+          <label for="llm-vision-model">视觉模型（验证码）</label>
+          <input id="llm-vision-model" type="text" placeholder="gpt-4o-mini" />
+        </div>
+        <div class="field">
+          <label for="llm-captcha-solver">验证码识别方式</label>
+          <select id="llm-captcha-solver">
+            <option value="auto">自动（先 OCR，失败再用大模型）</option>
+            <option value="tesseract">仅本地 OCR</option>
+            <option value="llm">仅大模型</option>
+          </select>
+        </div>
+        <div class="field field-checkbox">
+          <label>
+            <input id="llm-auto-plan" type="checkbox" />
+            启用 AI 自动规划
+          </label>
+        </div>
+        <div class="field">
+          <label for="llm-max-steps">自动规划最大步数</label>
+          <input id="llm-max-steps" type="number" min="5" max="50" step="1" value="20" />
+        </div>
+      </div>
+
+      <button id="save-settings-btn" class="btn primary">保存设置</button>
+      <p id="settings-message" class="message"></p>
+    </section>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

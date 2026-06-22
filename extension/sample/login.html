@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sample Login</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f3f4f6;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+      }
+      form {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        width: 320px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+      label {
+        display: block;
+        margin-top: 12px;
+        font-size: 14px;
+      }
+      input {
+        width: 100%;
+        margin-top: 6px;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      button {
+        margin-top: 16px;
+        width: 100%;
+        padding: 10px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      #result {
+        margin-top: 12px;
+        color: #059669;
+        min-height: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="login-form">
+      <h2>Sample Login</h2>
+      <label>
+        用户名
+        <input id="username" name="username" type="text" autocomplete="username" />
+      </label>
+      <label>
+        密码
+        <input id="password" name="password" type="password" autocomplete="current-password" />
+      </label>
+      <button type="submit">登录</button>
+      <div id="result"></div>
+    </form>
+    <script>
+      document.getElementById('login-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const username = document.getElementById('username').value;
+        document.getElementById('result').textContent = `欢迎，${username}！登录成功。`;
+      });
+    </script>
+  </body>
+</html>
