@@ -410,6 +410,7 @@ async function handleReplayRecording(
 async function handleUpdateRecordingDraftFlow(
   flow: RecordedStep[],
   tabId?: number,
+  invalidateReplay = false,
 ): Promise<{ ok: boolean }> {
   const draft = await getRecordingDraft();
   if (draft) {
@@ -417,8 +418,9 @@ async function handleUpdateRecordingDraftFlow(
       ...draft,
       ...(tabId !== undefined ? { tabId } : {}),
       steps: flow,
-      replayPendingSave: false,
-      lastReplayResult: undefined,
+      ...(invalidateReplay
+        ? { replayPendingSave: false, lastReplayResult: undefined }
+        : {}),
       updatedAt: Date.now(),
     });
     return { ok: true };
@@ -804,7 +806,11 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage & {
         return handleSaveDesignerFlow(message);
       case 'UPDATE_RECORDING_DRAFT_FLOW': {
         if (!message.flow) throw new Error('Missing flow');
-        return handleUpdateRecordingDraftFlow(message.flow, sender.tab?.id);
+        return handleUpdateRecordingDraftFlow(
+          message.flow,
+          sender.tab?.id,
+          message.invalidateReplay === true,
+        );
       }
       case 'SAVE_REPLAY_SESSION': {
         if (!sender.tab?.id || !message.replaySession) {

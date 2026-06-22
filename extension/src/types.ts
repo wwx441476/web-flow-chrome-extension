@@ -188,6 +188,8 @@ export interface BackgroundMessage {
   /** @deprecated */ siteName?: string;
   goal?: string;
   replayPendingSave?: boolean;
+  /** 更新草稿步骤时是否清除试跑成功状态（编辑步骤后需重新试跑） */
+  invalidateReplay?: boolean;
   replaySession?: import('./storage/replay-session-storage').ReplaySessionSnapshot;
   source?: 'draft' | 'workflow';
   designerSource?: 'draft' | 'workflow';

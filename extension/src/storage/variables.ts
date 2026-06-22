@@ -2,6 +2,30 @@ import type { Credentials, FillAction, RecordedStep, VariableSet } from '../type
 import { isFillAction } from '../actions/types';
 import { describeActionStep } from '../actions/describe';
 
+const USERNAME_KEY_PATTERN =
+  /^(用户名|账号|user(name)?|login(name)?|account|email|手机(号)?|mobile|phone)$/i;
+const PASSWORD_KEY_PATTERN = /^(密码|password|pwd|pass(word)?)$/i;
+
+function isUsernameVariableKey(key: string): boolean {
+  return key === 'username' || USERNAME_KEY_PATTERN.test(key.trim());
+}
+
+function isPasswordVariableKey(key: string): boolean {
+  return key === 'password' || PASSWORD_KEY_PATTERN.test(key.trim());
+}
+
+export { isUsernameVariableKey, isPasswordVariableKey };
+
+function classifyLoginFieldHint(text: string): 'username' | 'password' | null {
+  const part = text.trim();
+  if (!part) return null;
+  if (isPasswordVariableKey(part) || /password|密码|pwd/i.test(part)) return 'password';
+  if (isUsernameVariableKey(part) || /username|用户名|账号|user|login|account|email|手机/i.test(part)) {
+    return 'username';
+  }
+  return null;
+}
+
 export function normalizeFillStep(step: FillAction): FillAction {
   if (step.fillKind === 'literal' || step.fillKind === 'variable' || step.fillKind === 'captcha') {
     return step;
@@ -47,6 +71,14 @@ export function resolveFillValue(step: FillAction, variables: Record<string, str
   const key = normalized.variableName ?? normalized.field ?? 'value';
   if (variables[key] !== undefined) {
     return variables[key];
+  }
+
+  if (isUsernameVariableKey(key) && variables.username !== undefined) {
+    return variables.username;
+  }
+
+  if (isPasswordVariableKey(key) && variables.password !== undefined) {
+    return variables.password;
   }
 
   if (normalized.field === 'username' && variables.username !== undefined) {
@@ -95,6 +127,10 @@ export function accountValuesToVariableSet(input: {
 }
 
 export function inferVariableName(element: Element): string {
+  if (element instanceof HTMLInputElement && element.type === 'password') {
+    return 'password';
+  }
+
   const parts = [
     element.getAttribute('name') ?? '',
     element.getAttribute('id') ?? '',
@@ -103,6 +139,13 @@ export function inferVariableName(element: Element): string {
   ]
     .map((part) => part.trim())
     .filter(Boolean);
+
+  for (const part of parts) {
+    const classified = classifyLoginFieldHint(part);
+    if (classified) {
+      return classified;
+    }
+  }
 
   for (const part of parts) {
     const normalized = part

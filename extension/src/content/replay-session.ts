@@ -440,7 +440,10 @@ export async function retryStep(index: number): Promise<void> {
   }
 }
 
-export async function persistFlowToDraft(steps?: RecordedStep[]): Promise<boolean> {
+export async function persistFlowToDraft(
+  steps?: RecordedStep[],
+  options?: { invalidateReplay?: boolean },
+): Promise<boolean> {
   const flowToSave = steps ?? session?.flow;
   if (!flowToSave?.length) return false;
 
@@ -453,6 +456,7 @@ export async function persistFlowToDraft(steps?: RecordedStep[]): Promise<boolea
     const response = (await chrome.runtime.sendMessage({
       action: 'UPDATE_RECORDING_DRAFT_FLOW',
       flow: flowToSave.map((step) => ({ ...step })),
+      invalidateReplay: options?.invalidateReplay === true,
     })) as { ok?: boolean } | undefined;
     return response?.ok === true;
   } catch {

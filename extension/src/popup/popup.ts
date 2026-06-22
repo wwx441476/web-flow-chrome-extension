@@ -165,6 +165,17 @@ function invalidateReplayState(): void {
   updateRecordingUi(isRecordingActive);
 }
 
+function applyPendingSaveState(draft: {
+  replayPendingSave?: boolean;
+  lastReplayResult?: FillResult;
+}): void {
+  if (draft.replayPendingSave && draft.lastReplayResult?.success) {
+    lastReplayResult = draft.lastReplayResult;
+    $('save-panel').classList.remove('hidden');
+    $('record-message').textContent = '回放完成。若已达到预期效果，请确认保存。';
+  }
+}
+
 async function applyFlowChange(message?: string): Promise<void> {
   invalidateReplayState();
   renderRecordedFlow(recordedFlow);
@@ -713,11 +724,7 @@ async function loadRecordingDraft(): Promise<void> {
     $('record-message').textContent = `已录制 ${recordedFlow.length} 步，可点击「试跑回放」验证。`;
   }
 
-  if (draft.replayPendingSave && draft.lastReplayResult?.success) {
-    lastReplayResult = draft.lastReplayResult;
-    $('save-panel').classList.remove('hidden');
-    $('record-message').textContent = '回放完成。若已达到预期效果，请确认保存。';
-  }
+  applyPendingSaveState(draft);
 }
 
 async function startRecording(): Promise<void> {
@@ -1377,6 +1384,8 @@ async function init(): Promise<void> {
     const draft = changes.recordingDraft.newValue as {
       steps?: RecordedStep[];
       status?: string;
+      replayPendingSave?: boolean;
+      lastReplayResult?: FillResult;
     } | undefined;
     if (!draft || draft.status === 'recording') return;
     if (isRecordingActive) {
@@ -1390,6 +1399,7 @@ async function init(): Promise<void> {
       recordedFlow = draft.steps;
       renderRecordedFlow(recordedFlow);
     }
+    applyPendingSaveState(draft);
   });
 }
 

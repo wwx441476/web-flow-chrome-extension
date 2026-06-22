@@ -166,6 +166,10 @@ async function executeFill(step: FillAction, variables: VariableMap): Promise<st
 
   const element = await waitForElement(step.selector);
   const value = resolveFillValue(step, variables);
+  if (normalized.fillKind === 'variable' && !value) {
+    const key = normalized.variableName ?? normalized.field ?? 'value';
+    throw new Error(`变量「${key}」为空，请在扩展弹窗中填写 username / 密码`);
+  }
   fillField(element, value);
   return step.label ?? step.selector;
 }

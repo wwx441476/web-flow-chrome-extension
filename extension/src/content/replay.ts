@@ -1,6 +1,7 @@
 import type { RecordedStep, ReplayProgressStatus, StepResult, VariableMap } from '../types';
 import { actionStepName } from '../actions/describe';
 import { executeActionStep } from './action-executor';
+import { isPasswordVariableKey, isUsernameVariableKey } from '../storage/variables';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -75,12 +76,12 @@ export function flowToLegacySelectors(flow: RecordedStep[]): {
   const username = flow.find(
     (step) =>
       step.type === 'fill' &&
-      (step.variableName === 'username' || step.field === 'username'),
+      (isUsernameVariableKey(step.variableName ?? '') || step.field === 'username'),
   );
   const password = flow.find(
     (step) =>
       step.type === 'fill' &&
-      (step.variableName === 'password' || step.field === 'password'),
+      (isPasswordVariableKey(step.variableName ?? '') || step.field === 'password'),
   );
   const submit = [...flow].reverse().find((step) => step.type === 'click');
 

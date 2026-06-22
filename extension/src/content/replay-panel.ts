@@ -586,7 +586,7 @@ async function applyStepEditorChanges(options?: { close?: boolean }): Promise<bo
   if (options?.close !== false) {
     closeStepEditor();
   }
-  const saved = await persistFlowToDraft(flow);
+  const saved = await persistFlowToDraft(flow, { invalidateReplay: true });
   if (!saved) {
     setFooter('步骤已更新，但写入录制草稿失败，请重试「保存修改」', 'failed');
     return false;
@@ -718,7 +718,7 @@ function bindToolbarEvents(toolbar: HTMLElement): void {
           return;
         }
       }
-      setFooter('步骤修改已保存到录制草稿', 'success');
+      setFooter('步骤已保存到草稿。打开扩展 → 点击「确认成功并保存」完成工作流保存', 'success');
     })();
   });
 }
@@ -912,7 +912,6 @@ function createSessionCallbacks(): ReplaySessionCallbacks {
         flow = result.flow.map((step) => ({ ...step }));
         renderAllSteps();
       }
-      void persistFlowToDraft(flow);
       finishReplayPanel(result);
       updateToolbarState();
       void chrome.runtime.sendMessage({ type: 'REPLAY_FINISHED', result: { ...result, flow } });

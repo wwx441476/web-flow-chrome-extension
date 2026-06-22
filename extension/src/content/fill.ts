@@ -46,8 +46,17 @@ export function fillField(element: HTMLElement, value: string): void {
     element instanceof HTMLTextAreaElement
   ) {
     element.focus();
-    element.value = value;
-    element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    const prototype =
+      element instanceof HTMLInputElement ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype;
+    const nativeSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+    if (nativeSetter) {
+      nativeSetter.call(element, value);
+    } else {
+      element.value = value;
+    }
+    element.dispatchEvent(
+      new InputEvent('input', { bubbles: true, composed: true, data: value, inputType: 'insertText' }),
+    );
     element.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
     return;
   }
